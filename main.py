@@ -2,6 +2,7 @@ import googlemaps
 import json
 from datetime import datetime
 from datetime import timedelta
+from pandas.io.json import json_normalize
 
 API_KEY = open("config", "r").read() #don't steal my key plz
 gmaps = googlemaps.Client(key=API_KEY)
@@ -27,10 +28,12 @@ summary = data.get("summary")
 warnings = data.get("warnings")
 
 legs = data.get("legs")[0]
-distance = legs.get("distance").get("text")
-duration = legs.get("duration_in_traffic").get("text")
+total_distance = legs.get("distance").get("text")
+total_duration = legs.get("duration_in_traffic").get("text")
 raw_time = legs.get("duration_in_traffic").get("value")
 eta = now + timedelta(seconds=raw_time)
+    
+
 
 if warnings == []:
     warn_out = "There are no travel warnings :)"
@@ -39,7 +42,22 @@ else:
     
 print("\n\nRoute from ", start, " to ", end, " via ", summary)
 print(warn_out)
-print("You should cover ", distance, " in ", duration, " arriving at ", eta.strftime("%I:%M%p"))
+print("You should cover ", total_distance, " in ", total_duration, " arriving at ", eta.strftime("%I:%M%p"), "\n\n")
+
+out = open("out.html", "w")
+for step in legs.get("steps"):
+    duration = step.get("duration").get("text")
+    distance = step.get("distance").get("text")
+    #instructions = step.get("html_instructions").json_normalize()
+    instructions = step.get("html_instructions")
+    print(instructions, file=out)
+    #print("for ", duration, " | (", distance, ")", file=out)
+    print("<br>", file=out)
+    print(duration, " | (", distance, ")", file=out)
+    print("<br>", file=out)
+    print("<br>", file=out)
+    
+
 print("\n\nHave a safe trip!")
 
 
